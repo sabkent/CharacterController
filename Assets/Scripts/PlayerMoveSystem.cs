@@ -5,9 +5,9 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
 using Unity.CharacterController;
-using UnityEngine;
 
 [UpdateInGroup(typeof(PredictedFixedStepSimulationSystemGroup), OrderFirst = true)]
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
 partial struct PlayerMoveSystem : ISystem
 {
     [BurstCompile]
@@ -27,13 +27,7 @@ partial struct PlayerMoveSystem : ISystem
         }.Schedule(state.Dependency);
     }
 
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-        
-    }
-
-
+    [WithAll(typeof(Simulate))]
     public partial struct PlayerMoveJob : IJobEntity
     {
         [ReadOnly] public ComponentLookup<LocalTransform> LocalTransformLookup;

@@ -28,9 +28,10 @@ public struct Player : IComponentData
     [GhostField] public Entity ControlledCharacter;
 }
 
+[GhostComponent(SendTypeOptimization = GhostSendType.OnlyPredictedClients)]
 public struct PlayerNetworkInput : IComponentData
 {
-    public float2 LastProcessedLookYawPitchDegrees;
+    [GhostField]public float2 LastProcessedLookYawPitchDegrees;
 }
 
 [Serializable]

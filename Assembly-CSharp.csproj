@@ -118,6 +118,7 @@
     <Compile Include="Assets\Scripts\MainEntityCamera.cs" />
     <Compile Include="Assets\Scripts\PlayerAuthoring.cs" />
     <Compile Include="Assets\Samples\Character Controller\1.3.12\Standard Characters\Common\Scripts\FixedTickSystem.cs" />
+    <Compile Include="Assets\Scripts\InputDeltaUtilities.cs" />
     <Compile Include="Assets\Scripts\MainGameObjectCamera.cs" />
     <Compile Include="Assets\Scripts\GameInput.cs" />
     <Compile Include="Assets\Scripts\CharacterAspect.cs" />
@@ -144,6 +145,7 @@
     <Compile Include="Assets\Scripts\CharacterAuthoring.cs" />
     <Compile Include="Assets\Samples\Character Controller\1.3.12\Standard Characters\FirstPerson\Scripts\FirstPersonPlayerAuthoring.cs" />
     <Compile Include="Assets\Samples\Character Controller\1.3.12\Standard Characters\FirstPerson\Scripts\FirstPersonCharacterAuthoring.cs" />
+    <Compile Include="Assets\Scripts\CharacterUtilities.cs" />
     <Compile Include="Assets\Samples\Character Controller\1.3.12\Standard Characters\ThirdPerson\Scripts\OrbitCamera\OrbitCameraAuthoring.cs" />
     <Compile Include="Assets\Scripts\Bootstrap.cs" />
     <Compile Include="Assets\Samples\Character Controller\1.3.12\Standard Characters\FirstPerson\Scripts\FirstPersonCharacterComponent.cs" />

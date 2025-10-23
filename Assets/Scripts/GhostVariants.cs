@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 
-[UpdateBefore(typeof(TransformDefaultVariantSystem))]
+[CreateBefore(typeof(TransformDefaultVariantSystem))]
 public partial class DefaultVariantSystem : DefaultVariantSystemBase
 {
     protected override void RegisterDefaultVariants(Dictionary<ComponentType, Rule> defaultVariants)

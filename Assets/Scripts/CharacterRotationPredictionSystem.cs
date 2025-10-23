@@ -20,10 +20,16 @@ partial struct CharacterRotationPredictionSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Intentionally left blank.
-        // Rotation is authored in one place only:
-        // - Predicted/local ghosts: via CharacterAspect.VariableUpdate() in CharacterVariableUpdateSystem
-        // - Interpolated/remote ghosts: via CharacterRotationInterpolationSystem
-        // Having this system also write LocalTransform.Rotation causes double-writes per frame and visible jitter.
+        state.Dependency = new CharacterPredictedRotationJob().Schedule(state.Dependency);
+    }
+
+    [WithAll(typeof(Simulate))]
+    public partial struct CharacterPredictedRotationJob : IJobEntity
+    {
+        void Execute(ref LocalTransform localTransform, in Character character)
+        {
+            CharacterUtilities.ComputeRotationFromYAngleAndUp(character.CharacterYDegrees, math.up(), out quaternion rotation);
+            localTransform.Rotation = rotation;
+        }
     }
 }

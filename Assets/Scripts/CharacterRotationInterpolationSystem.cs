@@ -34,18 +34,10 @@ partial struct CharacterRotationInterpolationSystem : ISystem
         {
             if (LocalTransformLookup.TryGetComponent(entity, out LocalTransform transform))
             {
-                transform.Rotation = ComputeRotationFromYAngleAndUp(character.CharacterYDegrees, math.up());
+                CharacterUtilities.ComputeRotationFromYAngleAndUp(character.CharacterYDegrees, math.up(), out quaternion rotation);
+                transform.Rotation = rotation;
                 LocalTransformLookup[entity] = transform;
             }
-        }
-        
-        public static quaternion ComputeRotationFromYAngleAndUp(
-            float characterRotationYDegrees,
-            float3 characterTransformUp)
-        {
-            return
-                math.mul(MathUtilities.CreateRotationWithUpPriority(characterTransformUp, math.forward()),
-                    quaternion.Euler(0f, math.radians(characterRotationYDegrees), 0f));
         }
     }
 }
