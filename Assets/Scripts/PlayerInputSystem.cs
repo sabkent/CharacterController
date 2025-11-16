@@ -34,11 +34,11 @@ public partial struct PlayerInputSystem : ISystem
 
             if (math.lengthsq(lookConst) > math.lengthsq(lookDelta))
             {
-                InputDeltaUtilities.AddInputDelta(ref commands.ValueRW.LookYawPitchDegree,  lookConst * deltaTime * LookSensitivity);
+                InputDeltaUtilities.AddInputDelta(ref commands.ValueRW.LookYawPitchDegrees,  lookConst * deltaTime * LookSensitivity);
             }
             else
             {
-                InputDeltaUtilities.AddInputDelta(ref commands.ValueRW.LookYawPitchDegree, lookDelta * LookSensitivity);
+                InputDeltaUtilities.AddInputDelta(ref commands.ValueRW.LookYawPitchDegrees, lookDelta * LookSensitivity);
             }
             
             //Debug.Log($"delta: {lookDelta} const:{lookConst} yawPitch:{commands.ValueRW.LookYawPitchDegree}");

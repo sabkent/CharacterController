@@ -6,7 +6,6 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     
-    
     public UIDocument Menu;
 
     public WeakObjectSceneReference GameResourcesSubscene;

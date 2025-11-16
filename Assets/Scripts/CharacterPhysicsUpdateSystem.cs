@@ -4,6 +4,7 @@ using Unity.CharacterController;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Physics;
+using Unity.Transforms;
 
 [UpdateInGroup(typeof(KinematicCharacterPhysicsUpdateGroup))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation |
@@ -33,6 +34,8 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        if (!SystemAPI.HasSingleton<NetworkTime>()) return;
+        
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
         state.Dependency = new CharacterKinematicPhysicsJob
         {
@@ -47,9 +50,37 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
         public CharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
         
-        void Execute(CharacterAspect characterAspect)
+        void Execute(Entity entity,
+            RefRW<LocalTransform> localTransform,
+            RefRW<KinematicCharacterProperties> characterProperties,
+            RefRW<KinematicCharacterBody> characterBody,
+            RefRW<PhysicsCollider> physicsCollider,
+            RefRW<Character> characterComponent,
+            RefRW<CharacterControl> characterControl,
+            DynamicBuffer<KinematicCharacterHit> characterHitsBuffer,
+            DynamicBuffer<StatefulKinematicCharacterHit> statefulHitsBuffer,
+            DynamicBuffer<KinematicCharacterDeferredImpulse> deferredImpulsesBuffer,
+            DynamicBuffer<KinematicVelocityProjectionHit> velocityProjectionHits)
         {
-            characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
+            var characterProcessor = new KinematicCharacterProcessor
+            {
+                CharacterDataAccess = new KinematicCharacterDataAccess(
+
+                    entity,
+                    localTransform,
+                    characterProperties,
+                    characterBody,
+                    physicsCollider,
+                    characterHitsBuffer,
+                    statefulHitsBuffer,
+                    deferredImpulsesBuffer,
+                    velocityProjectionHits
+                ),
+                Character = characterComponent,
+                CharacterControl = characterControl,
+            };
+
+            characterProcessor.PhysicsUpdate(ref Context, ref BaseContext);
         }
 
         public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)

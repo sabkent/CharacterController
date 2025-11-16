@@ -4,11 +4,14 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CharacterAuthoring : MonoBehaviour
 {
     public Character Character = Character.Create();
     public AuthoringKinematicCharacterProperties CharacterProperties = AuthoringKinematicCharacterProperties.GetDefault();
+    
+    public GameObject CameraTarget;
     
     private class Baker : Baker<CharacterAuthoring>
     {
@@ -17,6 +20,9 @@ public class CharacterAuthoring : MonoBehaviour
             KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
             
             var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+            authoring.Character.CameraTarget = GetEntity(authoring.CameraTarget, TransformUsageFlags.Dynamic);
+            
             AddComponent(entity, authoring.Character);
             AddComponent(entity, new CharacterControl());
             AddComponent(entity, new CharacterInitialized());
@@ -37,6 +43,9 @@ public struct Character : IComponentData
         AirAcceleration = 50f,
         AirMaxSpeed = 10f,
         AirDrag = 0f,
+        PreventAirAccelerationAgainstUngroundedHits = true,
+        
+        JumpSpeed = 10f,
         
         Gravity = math.up() * -30f,
         
@@ -44,6 +53,7 @@ public struct Character : IComponentData
         
         MinViewAngle = -90f,
         MaxViewAngle = 90f
+        
     };
 
     public float GroundMaxSpeed;
@@ -52,6 +62,9 @@ public struct Character : IComponentData
     public float AirAcceleration;
     public float AirMaxSpeed;
     public float AirDrag;
+    public bool PreventAirAccelerationAgainstUngroundedHits;
+    
+    public float JumpSpeed;
     
     public float3 Gravity;
     
@@ -60,20 +73,25 @@ public struct Character : IComponentData
 
     public float MinViewAngle;
     public float MaxViewAngle;
+
+    public Entity CameraTarget;
     
     [HideInInspector] [GhostField(Quantization = 1000, Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
     public float CharacterYDegrees;
     [HideInInspector] [GhostField(Quantization = 1000, Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
     public float ViewPitchDegrees;
-    
+
+    [HideInInspector]public float ViewRollDegrees;
     [HideInInspector] public quaternion ViewLocalRotation;
+    [FormerlySerializedAs("CameraTargetRollAmount")] public float ViewRollAmount;
+    public float ViewRollSharpNess;
 }
 
 [Serializable]
 public struct CharacterControl : IComponentData
 {
     public float3 Move;
-    public float2 LookYawPitchDegreeDelta;
+    public float2 LookYawPitchDegreesDelta;
     public bool Jump;
 }
 
