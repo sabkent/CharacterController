@@ -33,15 +33,15 @@ partial struct PlayerLookSystem : ISystem
             in Player player, in CommandDataInterpolationDelay interpolationDelay)
         {
             var lookYawPitchDegreeDelta =
-                InputDeltaUtilities.GetInputDelta(commands.LookYawPitchDegree,
+                InputDeltaUtilities.GetInputDelta(commands.LookYawPitchDegrees,
                     networkInput.LastProcessedLookYawPitchDegrees);
             
-            networkInput.LastProcessedLookYawPitchDegrees = commands.LookYawPitchDegree;
+            networkInput.LastProcessedLookYawPitchDegrees = commands.LookYawPitchDegrees;
 
             if (CharacterControlLookup.HasComponent(player.ControlledCharacter))
             {
                 var characterControl = CharacterControlLookup[player.ControlledCharacter];
-                characterControl.LookYawPitchDegreeDelta = lookYawPitchDegreeDelta;
+                characterControl.LookYawPitchDegreesDelta = lookYawPitchDegreeDelta;
                 CharacterControlLookup[player.ControlledCharacter] = characterControl;
             }
         }

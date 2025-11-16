@@ -26,7 +26,7 @@ partial struct CharacterRotationPredictionSystem : ISystem
     [WithAll(typeof(Simulate))]
     public partial struct CharacterPredictedRotationJob : IJobEntity
     {
-        void Execute(ref LocalTransform localTransform, in Character character)
+        private void Execute(ref LocalTransform localTransform, in Character character)
         {
             CharacterUtilities.ComputeRotationFromYAngleAndUp(character.CharacterYDegrees, math.up(), out quaternion rotation);
             localTransform.Rotation = rotation;

@@ -37,6 +37,15 @@ partial struct CharacterRotationInterpolationSystem : ISystem
                 CharacterUtilities.ComputeRotationFromYAngleAndUp(character.CharacterYDegrees, math.up(), out quaternion rotation);
                 transform.Rotation = rotation;
                 LocalTransformLookup[entity] = transform;
+
+                if (LocalTransformLookup.TryGetComponent(character.CameraTarget,
+                        out LocalTransform cameraTargetTransform))
+                {
+                    cameraTargetTransform.Rotation =
+                        CharacterUtilities.CalculateRotationFrom(pitchDegrees: character.ViewPitchDegrees,
+                            rollDegrees: 0f);
+                    LocalTransformLookup[character.CameraTarget] = cameraTargetTransform;
+                }
             }
         }
     }
