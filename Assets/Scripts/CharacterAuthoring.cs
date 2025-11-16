@@ -43,6 +43,7 @@ public struct Character : IComponentData
         AirAcceleration = 50f,
         AirMaxSpeed = 10f,
         AirDrag = 0f,
+        PreventAirAccelerationAgainstUngroundedHits = true,
         
         JumpSpeed = 10f,
         
@@ -61,7 +62,8 @@ public struct Character : IComponentData
     public float AirAcceleration;
     public float AirMaxSpeed;
     public float AirDrag;
-
+    public bool PreventAirAccelerationAgainstUngroundedHits;
+    
     public float JumpSpeed;
     
     public float3 Gravity;

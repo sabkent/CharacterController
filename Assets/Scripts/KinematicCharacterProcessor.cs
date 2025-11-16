@@ -3,7 +3,6 @@ using Unity.CharacterController;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
-using UnityEngine;
 
 public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<CharacterUpdateContext>
 {
@@ -129,12 +128,44 @@ public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<Characte
 
             if (characterControl.Jump)
             {
-                Debug.Log("JUMP");
                 CharacterControlUtilities.StandardJump(ref characterBody, characterBody.GroundingUp * character.JumpSpeed, cancelVelocityBeforeJump: true, characterBody.GroundingUp);
             }
         }
+        else
+        {
+            // Move in air
+            var airAcceleration = characterControl.Move * character.AirAcceleration;
+            if (math.lengthsq(airAcceleration) > 0f)
+            {
+                var tmpVelocity = characterBody.RelativeVelocity;
+                CharacterControlUtilities.StandardAirMove(ref characterBody.RelativeVelocity, airAcceleration,
+                    character.AirMaxSpeed, characterBody.GroundingUp, deltaTime, false);
+
+                if (character.PreventAirAccelerationAgainstUngroundedHits &&
+                    KinematicCharacterUtilities.MovementWouldHitNonGroundedObstruction(
+                        in this,
+                        ref context,
+                        ref baseContext,
+                        CharacterDataAccess.CharacterProperties.ValueRO,
+                        CharacterDataAccess.LocalTransform.ValueRO,
+                        CharacterDataAccess.CharacterEntity,
+                        CharacterDataAccess.PhysicsCollider.ValueRO,
+                        characterBody.RelativeVelocity * deltaTime,
+                        out ColliderCastHit hit))
+                {
+                    characterBody.RelativeVelocity = tmpVelocity;
+                }
+            }
+
+            // Gravity
+            CharacterControlUtilities.AccelerateVelocity(ref characterBody.RelativeVelocity,
+                character.Gravity, deltaTime);
+
+            // Drag
+            CharacterControlUtilities.ApplyDragToVelocity(ref characterBody.RelativeVelocity, deltaTime,
+                character.AirDrag);
+        }
     }
-    
     
     #region IKinematicCharacterProcessor
     public void UpdateGroundingUp(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext)
