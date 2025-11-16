@@ -4,11 +4,12 @@ using Unity.CharacterController;
 using Unity.Entities;
 using Unity.NetCode;
 using Unity.Physics;
+using Unity.Transforms;
+using Unity.Collections;
 
 [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 [UpdateAfter(typeof(PredictedFixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PlayerMoveSystem))]
-//[UpdateAfter(typeof(PlayerVariableStepControlSystem))]
 [UpdateAfter(typeof(CharacterRotationPredictionSystem))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation |
                    WorldSystemFilterFlags.ServerSimulation)]
@@ -21,6 +22,7 @@ public partial struct CharacterVariableUpdateSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        state.RequireForUpdate<PhysicsWorldSingleton>();
         _characterQuery = KinematicCharacterUtilities.GetBaseCharacterQueryBuilder()
             .WithAll<Character, CharacterControl>()
             .Build(ref state);
@@ -37,17 +39,12 @@ public partial struct CharacterVariableUpdateSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
-
-        // Only write visual rotation on the final prediction tick to avoid visible jitter during resimulation
-        var netTime = SystemAPI.GetSingleton<NetworkTime>();
-        _context.WriteVisualRotation = netTime.IsFinalPredictionTick;
-
+        
         state.Dependency = new CharacterVariableUpdateJob
         {
             Context = _context,
             BaseContext = _baseContext
         }.Schedule(state.Dependency);
-
     }
 
     [WithAll(typeof(Simulate))]
@@ -56,9 +53,37 @@ public partial struct CharacterVariableUpdateSystem : ISystem
         public CharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
         
-        public void Execute(CharacterAspect characterAspect)
+        public void Execute(Entity entity,
+            RefRW<LocalTransform> localTransform,
+            RefRW<KinematicCharacterProperties> characterProperties,
+            RefRW<KinematicCharacterBody> characterBody,
+            RefRW<PhysicsCollider> physicsCollider,
+            RefRW<Character> characterComponent,
+            RefRW<CharacterControl> characterControl,
+            DynamicBuffer<KinematicCharacterHit> characterHitsBuffer,
+            DynamicBuffer<StatefulKinematicCharacterHit> statefulHitsBuffer,
+            DynamicBuffer<KinematicCharacterDeferredImpulse> deferredImpulsesBuffer,
+            DynamicBuffer<KinematicVelocityProjectionHit> velocityProjectionHits)
         {
-            characterAspect.VariableUpdate(ref Context, ref BaseContext);
+            var characterProcessor = new KinematicCharacterProcessor()
+            {
+                CharacterDataAccess = new KinematicCharacterDataAccess(
+
+                    entity,
+                    localTransform,
+                    characterProperties,
+                    characterBody,
+                    physicsCollider,
+                    characterHitsBuffer,
+                    statefulHitsBuffer,
+                    deferredImpulsesBuffer,
+                    velocityProjectionHits
+                ),
+                Character = characterComponent,
+                CharacterControl = characterControl
+            };
+
+            characterProcessor.VariableUpdate(ref Context, ref BaseContext);
         }
         
         public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -70,6 +95,19 @@ public partial struct CharacterVariableUpdateSystem : ISystem
         public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask,
             bool chunkWasExecuted)
         {
+        }
+    }
+
+    public partial struct CameraTargetJob : IJobEntity
+    {
+        [ReadOnly] public ComponentLookup<Character> CharacterLookup;
+
+        void Execute(ref LocalTransform transform, in CameraTarget cameraTarget)
+        {
+            if (CharacterLookup.TryGetComponent(cameraTarget.Character, out Character character))
+            {
+                transform.Rotation = character.ViewLocalRotation;
+            }
         }
     }
 }

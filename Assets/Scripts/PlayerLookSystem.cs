@@ -1,9 +1,11 @@
 using Unity.Burst;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.NetCode;
 
 [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+[UpdateBefore(typeof(CharacterVariableUpdateSystem))]
+[UpdateAfter(typeof(CharacterRotationPredictionSystem))]
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
 partial struct PlayerLookSystem : ISystem
 {
     [BurstCompile]
@@ -22,12 +24,7 @@ partial struct PlayerLookSystem : ISystem
         }.Schedule(state.Dependency);
     }
 
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-        
-    }
-
+    [WithAll(typeof(Simulate))]
     public partial struct PlayerLookJob : IJobEntity
     {
         public ComponentLookup<CharacterControl> CharacterControlLookup;
@@ -36,36 +33,17 @@ partial struct PlayerLookSystem : ISystem
             in Player player, in CommandDataInterpolationDelay interpolationDelay)
         {
             var lookYawPitchDegreeDelta =
-                GetInputDelta(commands.LookYawPitchDegree, networkInput.LastProcessedLookYawPitchDegrees);
+                InputDeltaUtilities.GetInputDelta(commands.LookYawPitchDegrees,
+                    networkInput.LastProcessedLookYawPitchDegrees);
             
-            networkInput.LastProcessedLookYawPitchDegrees = commands.LookYawPitchDegree;
+            networkInput.LastProcessedLookYawPitchDegrees = commands.LookYawPitchDegrees;
 
             if (CharacterControlLookup.HasComponent(player.ControlledCharacter))
             {
                 var characterControl = CharacterControlLookup[player.ControlledCharacter];
-                characterControl.LookYawPitchDegreeDelta = lookYawPitchDegreeDelta;
+                characterControl.LookYawPitchDegreesDelta = lookYawPitchDegreeDelta;
                 CharacterControlLookup[player.ControlledCharacter] = characterControl;
             }
-        }
-        
-        
-        public static float2 GetInputDelta(float2 currentValue, float2 previousValue)
-        {
-            float InputWrapAroundValue = 3000f;
-            float2 delta = currentValue - previousValue;
-
-            // When delta is very large, consider that the input has wrapped around
-            if (math.abs(delta.x) > (InputWrapAroundValue * 0.5f))
-            {
-                delta.x += (math.sign(previousValue.x - currentValue.x) * InputWrapAroundValue);
-            }
-
-            if (math.abs(delta.y) > (InputWrapAroundValue * 0.5f))
-            {
-                delta.y += (math.sign(previousValue.y - currentValue.y) * InputWrapAroundValue);
-            }
-
-            return delta;
         }
     }
 }
