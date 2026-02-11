@@ -9,6 +9,7 @@ using Unity.Transforms;
 [UpdateInGroup(typeof(KinematicCharacterPhysicsUpdateGroup))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation |
                    WorldSystemFilterFlags.ServerSimulation)]
+[BurstCompile]
 partial struct CharacterPhysicsUpdateSystem : ISystem
 {
     private EntityQuery _characterQuery;
@@ -45,6 +46,7 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
     }
 
     [WithAll(typeof(Simulate))]
+    [BurstCompile]
     public partial struct CharacterKinematicPhysicsJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public CharacterUpdateContext Context;
@@ -55,12 +57,12 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
             RefRW<KinematicCharacterProperties> characterProperties,
             RefRW<KinematicCharacterBody> characterBody,
             RefRW<PhysicsCollider> physicsCollider,
-            RefRW<Character> characterComponent,
-            RefRW<CharacterControl> characterControl,
             DynamicBuffer<KinematicCharacterHit> characterHitsBuffer,
             DynamicBuffer<StatefulKinematicCharacterHit> statefulHitsBuffer,
             DynamicBuffer<KinematicCharacterDeferredImpulse> deferredImpulsesBuffer,
-            DynamicBuffer<KinematicVelocityProjectionHit> velocityProjectionHits)
+            DynamicBuffer<KinematicVelocityProjectionHit> velocityProjectionHits,
+            RefRW<Character> characterComponent,
+            RefRW<CharacterControl> characterControl)
         {
             var characterProcessor = new KinematicCharacterProcessor
             {

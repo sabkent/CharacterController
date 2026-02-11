@@ -43,7 +43,6 @@ public partial struct PlayerInputSystem : ISystem
             
             //Debug.Log($"delta: {lookDelta} const:{lookConst} yawPitch:{commands.ValueRW.LookYawPitchDegree}");
             
-            
             commands.ValueRW.JumpPressed = default;
             if(actions.Player.Jump.WasPressedThisFrame())
                 commands.ValueRW.JumpPressed.Set();

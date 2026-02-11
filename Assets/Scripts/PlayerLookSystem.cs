@@ -4,7 +4,7 @@ using Unity.NetCode;
 
 [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 [UpdateBefore(typeof(CharacterVariableUpdateSystem))]
-[UpdateAfter(typeof(CharacterRotationPredictionSystem))]
+[UpdateAfter(typeof(PlayerCharacterRotationSystem))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
 partial struct PlayerLookSystem : ISystem
 {
@@ -28,8 +28,8 @@ partial struct PlayerLookSystem : ISystem
     public partial struct PlayerLookJob : IJobEntity
     {
         public ComponentLookup<CharacterControl> CharacterControlLookup;
-        
-        void Execute(ref PlayerCommands commands, ref PlayerNetworkInput networkInput, 
+
+        private void Execute(ref PlayerCommands commands, ref PlayerNetworkInput networkInput, 
             in Player player, in CommandDataInterpolationDelay interpolationDelay)
         {
             var lookYawPitchDegreeDelta =

@@ -10,7 +10,7 @@ using Unity.Collections;
 [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 [UpdateAfter(typeof(PredictedFixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PlayerMoveSystem))]
-[UpdateAfter(typeof(CharacterRotationPredictionSystem))]
+[UpdateAfter(typeof(PlayerCharacterRotationSystem))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation |
                    WorldSystemFilterFlags.ServerSimulation)]
 public partial struct CharacterVariableUpdateSystem : ISystem

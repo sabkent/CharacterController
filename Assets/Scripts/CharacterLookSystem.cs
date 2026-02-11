@@ -1,3 +1,4 @@
+using Unity.Burst;
 using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
@@ -7,8 +8,10 @@ using Unity.Transforms;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateBefore(typeof(TransformSystemGroup))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-public partial struct CharacterPresentationSystem : ISystem
+[BurstCompile]
+public partial struct CharacterLookSystem : ISystem
 {
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         state.Dependency = new CharacterCameraTargetRoll
@@ -20,6 +23,7 @@ public partial struct CharacterPresentationSystem : ISystem
     }
 
     [WithAll(typeof(Simulate))]
+    [BurstCompile]
     public partial struct CharacterCameraTargetRoll : IJobEntity
     {
         public float DeltaTime;
