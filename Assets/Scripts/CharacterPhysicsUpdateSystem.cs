@@ -24,6 +24,8 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
             .Build(ref state);
 
         _context = new CharacterUpdateContext();
+        _context.OnSystemCreate(ref state);
+        
         _baseContext = new KinematicCharacterUpdateContext();
         _baseContext.OnSystemCreate(ref state);
         
@@ -37,7 +39,11 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
     {
         if (!SystemAPI.HasSingleton<NetworkTime>()) return;
         
+        var commandBuffer = SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>().ValueRW
+            .CreateCommandBuffer(state.WorldUnmanaged);
+        _context.OnSystemUpdate(ref state, commandBuffer);
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
+        
         state.Dependency = new CharacterKinematicPhysicsJob
         {
             Context = _context,
@@ -52,7 +58,8 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
         public CharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
         
-        void Execute(Entity entity,
+        void Execute([ChunkIndexInQuery] int chunkIndex,
+            Entity entity,
             RefRW<LocalTransform> localTransform,
             RefRW<KinematicCharacterProperties> characterProperties,
             RefRW<KinematicCharacterBody> characterBody,
@@ -61,9 +68,13 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
             DynamicBuffer<StatefulKinematicCharacterHit> statefulHitsBuffer,
             DynamicBuffer<KinematicCharacterDeferredImpulse> deferredImpulsesBuffer,
             DynamicBuffer<KinematicVelocityProjectionHit> velocityProjectionHits,
+            
             RefRW<Character> characterComponent,
-            RefRW<CharacterControl> characterControl)
+            RefRW<CharacterControl> characterControl,
+            RefRW<CharacterStateMachine> stateMachine)
         {
+            Context.SetChunkIndex(chunkIndex);
+            
             var characterProcessor = new KinematicCharacterProcessor
             {
                 CharacterDataAccess = new KinematicCharacterDataAccess(
@@ -80,6 +91,7 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
                 ),
                 Character = characterComponent,
                 CharacterControl = characterControl,
+                StateMachine = stateMachine
             };
 
             characterProcessor.PhysicsUpdate(ref Context, ref BaseContext);

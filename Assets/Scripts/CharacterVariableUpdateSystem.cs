@@ -23,11 +23,14 @@ public partial struct CharacterVariableUpdateSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PhysicsWorldSingleton>();
+        
         _characterQuery = KinematicCharacterUtilities.GetBaseCharacterQueryBuilder()
-            .WithAll<Character, CharacterControl>()
+            .WithAll<Character, CharacterControl, CharacterStateMachine>()
             .Build(ref state);
 
         _context = new CharacterUpdateContext();
+        _context.OnSystemCreate(ref state);
+        
         _baseContext = new KinematicCharacterUpdateContext();
         _baseContext.OnSystemCreate(ref state);
         
@@ -38,13 +41,16 @@ public partial struct CharacterVariableUpdateSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var commandBuffer = SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>().ValueRW
+            .CreateCommandBuffer(state.WorldUnmanaged);
+        _context.OnSystemUpdate(ref state, commandBuffer);
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
-        
-        state.Dependency = new CharacterVariableUpdateJob
+
+        new CharacterVariableUpdateJob
         {
             Context = _context,
             BaseContext = _baseContext
-        }.Schedule(state.Dependency);
+        }.ScheduleParallel();
     }
 
     [WithAll(typeof(Simulate))]

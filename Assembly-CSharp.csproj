@@ -101,6 +101,8 @@
     <AdditionalFiles Include="Packages/com.unity.netcode/Runtime/SourceGenerators/Templates/DefaultTypes/GhostSnapshotValueFloat4.NetCodeSourceGenerator.additionalfile" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\States\AirMoveState.cs" />
+    <Compile Include="Assets\Scripts\States\GroundMoveState.cs" />
     <Compile Include="Assets\Scripts\PlayerMoveSystem.cs" />
     <Compile Include="Assets\Scripts\PlayerCharacterRotationSystem.cs" />
     <Compile Include="Assets\Scripts\CharacterVariableUpdateSystem.cs" />
@@ -111,12 +113,15 @@
     <Compile Include="Assets\Scripts\InputDeltaUtilities.cs" />
     <Compile Include="Assets\Scripts\MainGameObjectCamera.cs" />
     <Compile Include="Assets\Scripts\GameInput.cs" />
+    <Compile Include="Assets\Scripts\CharacterStateMachine.cs" />
     <Compile Include="Assets\Scripts\OtherCharactersRotationSystem.cs" />
     <Compile Include="Assets\Scripts\GhostVariants.cs" />
+    <Compile Include="Assets\Scripts\ICharacterState.cs" />
     <Compile Include="Assets\InputSystem_Actions.cs" />
     <Compile Include="Assets\Scripts\MainEntityCameraAuthoring.cs" />
     <Compile Include="Assets\Scripts\PlayerInputSystem.cs" />
     <Compile Include="Assets\Scripts\CharacterLookSystem.cs" />
+    <Compile Include="Assets\Scripts\CharacterStates.cs" />
     <Compile Include="Assets\Scripts\GameResourceAuthoring.cs" />
     <Compile Include="Assets\Scripts\GoInGame.cs" />
     <Compile Include="Assets\Scripts\GameSession.cs" />

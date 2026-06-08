@@ -26,6 +26,7 @@ public class CharacterAuthoring : MonoBehaviour
             AddComponent(entity, authoring.Character);
             AddComponent(entity, new CharacterControl());
             AddComponent(entity, new CharacterInitialized());
+            AddComponent(entity, new CharacterStateMachine());
             SetComponentEnabled<CharacterInitialized>(entity, false);
         }
     }
