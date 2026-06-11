@@ -20,7 +20,7 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         _characterQuery = KinematicCharacterUtilities.GetBaseCharacterQueryBuilder()
-            .WithAll<Character, CharacterControl>()
+            .WithAll<Character, CharacterControl, CharacterStateMachine, CustomGravity>()
             .Build(ref state);
 
         _context = new CharacterUpdateContext();
@@ -41,14 +41,15 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
         
         var commandBuffer = SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>().ValueRW
             .CreateCommandBuffer(state.WorldUnmanaged);
+        
         _context.OnSystemUpdate(ref state, commandBuffer);
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
-        
-        state.Dependency = new CharacterKinematicPhysicsJob
+
+        new CharacterKinematicPhysicsJob
         {
             Context = _context,
             BaseContext = _baseContext
-        }.Schedule(state.Dependency);
+        }.ScheduleParallel();
     }
 
     [WithAll(typeof(Simulate))]
@@ -71,7 +72,8 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
             
             RefRW<Character> characterComponent,
             RefRW<CharacterControl> characterControl,
-            RefRW<CharacterStateMachine> stateMachine)
+            RefRW<CharacterStateMachine> stateMachine,
+            RefRW<CustomGravity> customGravity)
         {
             Context.SetChunkIndex(chunkIndex);
             
@@ -91,7 +93,8 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
                 ),
                 Character = characterComponent,
                 CharacterControl = characterControl,
-                StateMachine = stateMachine
+                StateMachine = stateMachine,
+                CustomGravity = customGravity
             };
 
             characterProcessor.PhysicsUpdate(ref Context, ref BaseContext);

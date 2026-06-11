@@ -25,7 +25,7 @@ public partial struct CharacterVariableUpdateSystem : ISystem
         state.RequireForUpdate<PhysicsWorldSingleton>();
         
         _characterQuery = KinematicCharacterUtilities.GetBaseCharacterQueryBuilder()
-            .WithAll<Character, CharacterControl, CharacterStateMachine>()
+            .WithAll<Character, CharacterControl, CharacterStateMachine, CustomGravity>()
             .Build(ref state);
 
         _context = new CharacterUpdateContext();
@@ -43,6 +43,7 @@ public partial struct CharacterVariableUpdateSystem : ISystem
     {
         var commandBuffer = SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>().ValueRW
             .CreateCommandBuffer(state.WorldUnmanaged);
+        
         _context.OnSystemUpdate(ref state, commandBuffer);
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
 
@@ -53,28 +54,34 @@ public partial struct CharacterVariableUpdateSystem : ISystem
         }.ScheduleParallel();
     }
 
+    [BurstCompile]
     [WithAll(typeof(Simulate))]
     public partial struct CharacterVariableUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public CharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
         
-        public void Execute(Entity entity,
+        public void Execute([ChunkIndexInQuery] int chunkIndex,
+            Entity entity,
             RefRW<LocalTransform> localTransform,
             RefRW<KinematicCharacterProperties> characterProperties,
             RefRW<KinematicCharacterBody> characterBody,
             RefRW<PhysicsCollider> physicsCollider,
             RefRW<Character> characterComponent,
             RefRW<CharacterControl> characterControl,
+            RefRW<CharacterStateMachine> stateMachine,
+            RefRW<CustomGravity> customGravity,
+            
             DynamicBuffer<KinematicCharacterHit> characterHitsBuffer,
             DynamicBuffer<StatefulKinematicCharacterHit> statefulHitsBuffer,
             DynamicBuffer<KinematicCharacterDeferredImpulse> deferredImpulsesBuffer,
             DynamicBuffer<KinematicVelocityProjectionHit> velocityProjectionHits)
         {
+            Context.SetChunkIndex(chunkIndex);
+            
             var characterProcessor = new KinematicCharacterProcessor()
             {
                 CharacterDataAccess = new KinematicCharacterDataAccess(
-
                     entity,
                     localTransform,
                     characterProperties,
@@ -86,7 +93,9 @@ public partial struct CharacterVariableUpdateSystem : ISystem
                     velocityProjectionHits
                 ),
                 Character = characterComponent,
-                CharacterControl = characterControl
+                CharacterControl = characterControl,
+                StateMachine = stateMachine,
+                CustomGravity = customGravity
             };
 
             characterProcessor.VariableUpdate(ref Context, ref BaseContext);

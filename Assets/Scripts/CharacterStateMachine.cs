@@ -9,6 +9,7 @@ public struct CharacterStateMachine : IComponentData
     public CharacterStates PreviousState;
 
     public GroundMoveState GroundMove;
+    public AirMoveState AirMove;
 
     public void Transition(CharacterStates state, ref CharacterUpdateContext context,
         ref KinematicCharacterUpdateContext baseContext, in KinematicCharacterProcessor processor)
@@ -25,6 +26,9 @@ public struct CharacterStateMachine : IComponentData
     {
         switch (current)
         {
+            case CharacterStates.AirMove:
+                AirMove.OnStateEnter(previous, ref context, ref baseContext, in processor);
+                break;
             case CharacterStates.GroundMove:
                 GroundMove.OnStateEnter(previous, ref context, ref baseContext, in processor);
                 break;
@@ -36,6 +40,9 @@ public struct CharacterStateMachine : IComponentData
     {
         switch (previous)
         {
+            case CharacterStates.AirMove:
+                AirMove.OnStateExit(current, ref context, ref baseContext, in processor);
+                break;
             case CharacterStates.GroundMove:
                 GroundMove.OnStateExit(current, ref context, ref baseContext, in processor);
                 break;
@@ -47,6 +54,9 @@ public struct CharacterStateMachine : IComponentData
     {
         switch (CurrentState)
         {
+            case CharacterStates.AirMove:
+                AirMove.PhysicsUpdate(ref context, ref baseContext, in processor);
+                break;
             case CharacterStates.GroundMove:
                 GroundMove.PhysicsUpdate(ref context, ref baseContext, in processor);
                 break;
@@ -58,6 +68,9 @@ public struct CharacterStateMachine : IComponentData
     {
         switch (CurrentState)
         {
+            case CharacterStates.AirMove:
+                AirMove.VariableUpdate(ref context, ref baseContext, in processor);
+                break;
             case CharacterStates.GroundMove:
                 GroundMove.VariableUpdate(ref context, ref baseContext, in processor);
                 break;

@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
 using Unity.CharacterController;
+using UnityEngine;
 
 [UpdateInGroup(typeof(PredictedFixedStepSimulationSystemGroup), OrderFirst = true)]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
@@ -46,7 +47,7 @@ partial struct PlayerMoveSystem : ISystem
                 
                 characterControl.Move = MathUtilities.ClampToMaxLength(move, 1f);
                 characterControl.Jump = commands.JumpPressed.IsSet;
-
+                
                 CharacterControlLookup[player.ControlledCharacter] = characterControl;
             }
         }

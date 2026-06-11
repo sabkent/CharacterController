@@ -2,6 +2,7 @@
 using Unity.CharacterController;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public struct GroundMoveState:ICharacterState
@@ -9,7 +10,9 @@ public struct GroundMoveState:ICharacterState
     public void OnStateEnter(CharacterStates previousState, ref CharacterUpdateContext context,
         ref KinematicCharacterUpdateContext baseContext, in KinematicCharacterProcessor processor)
     {
+        ref Character character = ref processor.Character.ValueRW;
         
+        processor.SetCapsuleGeometry(character.StandingGeometry.ToCapsuleGeometry());
     }
 
     public void OnStateExit(CharacterStates nextState, ref CharacterUpdateContext context,
@@ -24,9 +27,10 @@ public struct GroundMoveState:ICharacterState
     public void PhysicsUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext,
         in KinematicCharacterProcessor processor)
     {
-        ref KinematicCharacterBody characterBody = ref processor.CharacterDataAccess.CharacterBody.ValueRW;
         ref Character character = ref processor.Character.ValueRW;
         ref CharacterControl characterControl = ref processor.CharacterControl.ValueRW;
+        
+        ref KinematicCharacterBody characterBody = ref processor.CharacterDataAccess.CharacterBody.ValueRW;
         
         float deltaTime = baseContext.Time.DeltaTime;
         float elapsedTime = (float)baseContext.Time.ElapsedTime;
@@ -40,6 +44,7 @@ public struct GroundMoveState:ICharacterState
                 math.rotate(characterBody.RotationFromParent, characterBody.RelativeVelocity);
         }
 
+        Debug.Log($"character grounded: {characterBody.IsGrounded}");
         if (characterBody.IsGrounded)
         {
             //character.IsSprinting = characterControl.SprintHeld;
@@ -55,12 +60,27 @@ public struct GroundMoveState:ICharacterState
         processor.HandlePhysicsUpdatePhaseTwo(ref context, ref baseContext,
             allowPreventGroundingFromFutureSlopeChange: true, allowGroundingPushing: true,
             allowMovementAndDecollisions: true, allowMovingPlatformDetection: true, allowParentHandling: true);
+        
+        DetectTransition(ref context, ref baseContext, in processor);
     }
 
     public void VariableUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext,
         in KinematicCharacterProcessor processor)
     {
-        throw new System.NotImplementedException();
+        ref Character character = ref processor.Character.ValueRW;
+        ref CharacterControl characterControl = ref processor.CharacterControl.ValueRW;
+        
+        ref KinematicCharacterBody characterBody = ref processor.CharacterDataAccess.CharacterBody.ValueRW;
+        ref quaternion characterRotation = ref processor.CharacterDataAccess.LocalTransform.ValueRW.Rotation;
+        float deltaTime = baseContext.Time.DeltaTime;
+
+        if (math.lengthsq(characterControl.Move) > 0)
+        {
+            CharacterControlUtilities.SlerpRotationTowardsDirectionAroundUp(ref characterRotation, deltaTime,
+                math.normalizesafe(characterControl.Move), MathUtilities.GetUpFromRotation(characterRotation),
+                character.GroundedRotationSharpness);
+        }
+        
     }
 
     public (Entity cameraTarget, bool calculateUpFromGravity) GetCameraParameters(in Character character)

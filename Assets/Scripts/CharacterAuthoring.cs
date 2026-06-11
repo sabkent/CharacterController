@@ -3,13 +3,14 @@ using Unity.CharacterController;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
+using Unity.Physics;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public class CharacterAuthoring : MonoBehaviour
 {
-    public Character Character = Character.Create();
-    public AuthoringKinematicCharacterProperties CharacterProperties = AuthoringKinematicCharacterProperties.GetDefault();
+    public Character Character = default;
+    public AuthoringKinematicCharacterProperties KinematicProperties = AuthoringKinematicCharacterProperties.GetDefault();
     
     public GameObject CameraTarget;
     
@@ -17,11 +18,13 @@ public class CharacterAuthoring : MonoBehaviour
     {
         public override void Bake(CharacterAuthoring authoring)
         {
-            KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
+            KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.KinematicProperties);
             
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
             authoring.Character.CameraTarget = GetEntity(authoring.CameraTarget, TransformUsageFlags.Dynamic);
+
+            authoring.Character.ViewLocalRotation = quaternion.identity;
             
             AddComponent(entity, authoring.Character);
             AddComponent(entity, new CharacterControl());
@@ -36,33 +39,15 @@ public class CharacterAuthoring : MonoBehaviour
 [GhostComponent]
 public struct Character : IComponentData
 {
-    public static Character Create() => new Character()
-    {
-        GroundMaxSpeed = 10f,
-        GroundMovementSharpness = 15f,
-        
-        AirAcceleration = 50f,
-        AirMaxSpeed = 10f,
-        AirDrag = 0f,
-        PreventAirAccelerationAgainstUngroundedHits = true,
-        
-        JumpSpeed = 10f,
-        
-        Gravity = math.up() * -30f,
-        
-        StepAndSlopeHandling = BasicStepAndSlopeHandlingParameters.GetDefault(),
-        
-        MinViewAngle = -90f,
-        MaxViewAngle = 90f
-        
-    };
-
     public float GroundMaxSpeed;
     public float GroundMovementSharpness;
+    public float GroundedRotationSharpness;
 
     public float AirAcceleration;
     public float AirMaxSpeed;
     public float AirDrag;
+    public float AirRotationSharpness;
+    
     public bool PreventAirAccelerationAgainstUngroundedHits;
     
     public float JumpSpeed;
@@ -71,11 +56,16 @@ public struct Character : IComponentData
     
     public BasicStepAndSlopeHandlingParameters StepAndSlopeHandling;
 
-
     public float MinViewAngle;
     public float MaxViewAngle;
 
     public Entity CameraTarget;
+    
+    public float UpOrientationAdaptationSharpness;
+
+    
+    public CapsuleGeometryDefinition StandingGeometry;
+    
     
     [HideInInspector] [GhostField(Quantization = 1000, Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
     public float CharacterYDegrees;
@@ -86,6 +76,11 @@ public struct Character : IComponentData
     [HideInInspector] public quaternion ViewLocalRotation;
     [FormerlySerializedAs("CameraTargetRollAmount")] public float ViewRollAmount;
     public float ViewRollSharpNess;
+    
+    [HideInInspector] public bool HasDetectedMoveAgainstWall;
+    [HideInInspector] public float3 LastKnownWallNormal;
+
+    [HideInInspector] public bool JumpPressedBeforeBecameGrounded;
 }
 
 [Serializable]
@@ -97,6 +92,27 @@ public struct CharacterControl : IComponentData
 }
 
 public struct CharacterInitialized : IComponentData, IEnableableComponent { }
+
+[Serializable]
+public struct CapsuleGeometryDefinition
+{
+    public float Radius;
+    public float Height;
+    public float3 Center;
+
+    public CapsuleGeometry ToCapsuleGeometry()
+    {
+        Height = math.max(Height, (Radius + math.EPSILON) * 2f);
+        float halfHeight = Height * .5f;
+
+        return new CapsuleGeometry
+        {
+            Radius = Radius,
+            Vertex0 = Center + (-math.up() * (halfHeight - Radius)),
+            Vertex1 = Center + (math.up() * (halfHeight - Radius))
+        };
+    }
+}
 
 public struct MinMax<T> where T: struct
 {

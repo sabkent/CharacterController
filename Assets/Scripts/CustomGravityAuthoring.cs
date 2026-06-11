@@ -1,0 +1,19 @@
+using Unity.Entities;
+using UnityEngine;
+
+public class CustomGravityAuthoring : MonoBehaviour
+{
+    public float GravityMultiplier = 1f;
+
+    private class Baker : Baker<CustomGravityAuthoring>
+    {
+        public override void Bake(CustomGravityAuthoring authoring)
+        {
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new CustomGravity
+            {
+                GravityMultiplier = authoring.GravityMultiplier
+            });
+        }
+    }
+}

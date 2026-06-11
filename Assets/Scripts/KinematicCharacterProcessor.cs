@@ -3,6 +3,8 @@ using Unity.CharacterController;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using UnityEngine;
+using CapsuleCollider = Unity.Physics.CapsuleCollider;
 
 public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<CharacterUpdateContext>
 {
@@ -10,117 +12,34 @@ public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<Characte
     public RefRW<Character> Character;
     public RefRW<CharacterControl> CharacterControl;
     public RefRW<CharacterStateMachine> StateMachine;
+    public RefRW<CustomGravity> CustomGravity;
 
     public void PhysicsUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext)
     {
         ref Character character = ref Character.ValueRW;
-        ref KinematicCharacterBody characterBody = ref CharacterDataAccess.CharacterBody.ValueRW;
         ref CharacterControl characterControl = ref CharacterControl.ValueRW;
         ref CharacterStateMachine stateMachine = ref StateMachine.ValueRW;
+        ref KinematicCharacterBody characterBody = ref CharacterDataAccess.CharacterBody.ValueRW;
         
-        // if(stateMachine.CurrentState == CharacterStates.Uninitialized)
-        //     stateMachine.Transition(CharacterStates.GroundMove, ref context, ref baseContext, in this);
-        //
-        // stateMachine.PhysicsUpdate(ref context, ref baseContext, in this);
+        if(stateMachine.CurrentState == CharacterStates.Uninitialized)
+            stateMachine.Transition(CharacterStates.AirMove, ref context, ref baseContext, in this);
         
+        character.HasDetectedMoveAgainstWall = false;
         
+        stateMachine.PhysicsUpdate(ref context, ref baseContext, in this);
         
-        
-        // ref float3 position = ref CharacterDataAccess.LocalTransform.ValueRW.Position;
-        //
-        // KinematicCharacterUtilities.Update_Initialize(in this, ref context, ref baseContext, ref characterBody,
-        //     CharacterDataAccess.CharacterHitsBuffer,
-        //     CharacterDataAccess.DeferredImpulsesBuffer, 
-        //     CharacterDataAccess.VelocityProjectionHits,
-        //     baseContext.Time.DeltaTime);
-        //
-        // KinematicCharacterUtilities.Update_ParentMovement(in this, ref context, ref baseContext,
-        //     CharacterDataAccess.CharacterEntity,
-        //     ref characterBody,
-        //     CharacterDataAccess.CharacterProperties.ValueRO,
-        //     CharacterDataAccess.PhysicsCollider.ValueRO,
-        //     CharacterDataAccess.LocalTransform.ValueRO,
-        //     ref position, 
-        //     characterBody.WasGroundedBeforeCharacterUpdate);
-        //
-        // KinematicCharacterUtilities.Update_Grounding(in this, ref context, ref baseContext, ref characterBody,
-        //     CharacterDataAccess.CharacterEntity,
-        //     CharacterDataAccess.CharacterProperties.ValueRO,
-        //     CharacterDataAccess.PhysicsCollider.ValueRO,
-        //     CharacterDataAccess.LocalTransform.ValueRO,
-        //     CharacterDataAccess.VelocityProjectionHits,
-        //     CharacterDataAccess.CharacterHitsBuffer,
-        //     ref position);
-        //
-        // HandleVelocityControl(ref context, ref baseContext);
-        //
-        // KinematicCharacterUtilities.Update_PreventGroundingFromFutureSlopeChange(in this, ref context, ref baseContext,
-        //     CharacterDataAccess.CharacterEntity,
-        //     ref characterBody,
-        //     CharacterDataAccess.CharacterProperties.ValueRO,
-        //     CharacterDataAccess.PhysicsCollider.ValueRO,
-        //     in character.StepAndSlopeHandling);
-        //
-        // KinematicCharacterUtilities.Update_GroundPushing(in this, ref context, ref baseContext, ref characterBody,
-        //     CharacterDataAccess.CharacterProperties.ValueRO,
-        //     CharacterDataAccess.LocalTransform.ValueRO,
-        //     CharacterDataAccess.DeferredImpulsesBuffer,
-        //     character.Gravity);
-        //
-        // KinematicCharacterUtilities.Update_MovementAndDecollisions(
-        //     in this,
-        //     ref context,
-        //     ref baseContext,
-        //     CharacterDataAccess.CharacterEntity,
-        //     ref characterBody,
-        //     CharacterDataAccess.CharacterProperties.ValueRO,
-        //     CharacterDataAccess.PhysicsCollider.ValueRO,
-        //     CharacterDataAccess.LocalTransform.ValueRO,
-        //     CharacterDataAccess.VelocityProjectionHits,
-        //     CharacterDataAccess.CharacterHitsBuffer,
-        //     CharacterDataAccess.DeferredImpulsesBuffer,
-        //     ref position);
-        //
-        // KinematicCharacterUtilities.Update_MovingPlatformDetection(
-        //     ref baseContext,
-        //     ref characterBody);
-        //
-        // KinematicCharacterUtilities.Update_ParentMomentum(
-        //     ref baseContext,
-        //     ref characterBody,
-        //     CharacterDataAccess.LocalTransform.ValueRO.Position);
-        //
-        // KinematicCharacterUtilities.Update_ProcessStatefulCharacterHits(
-        //     CharacterDataAccess.CharacterHitsBuffer,
-        //     CharacterDataAccess.StatefulHitsBuffer);
+        character.JumpPressedBeforeBecameGrounded = false;
     }
 
     public void VariableUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext)
     {
         ref KinematicCharacterBody characterBody = ref CharacterDataAccess.CharacterBody.ValueRW;
-        //ref CharacterStateMachine stateMachine = ref StateMachine.ValueRW;
+        ref CharacterStateMachine stateMachine = ref StateMachine.ValueRW;
         ref quaternion characterRotation = ref CharacterDataAccess.LocalTransform.ValueRW.Rotation;
-        
-        // KinematicCharacterUtilities.AddVariableRateRotationFromFixedRateRotation(ref characterRotation, characterBody.RotationFromParent, 
-        //     baseContext.Time.DeltaTime, characterBody.LastPhysicsUpdateDeltaTime);
-        //
-        // stateMachine.VariableUpdate(ref context, ref baseContext, in this);
-        //
-        // ref Character character = ref Character.ValueRW;
-        //
-        // ref CharacterControl characterControl = ref CharacterControl.ValueRW;
-        //
-        // CharacterUtilities.ComputeFinalRotationsFromRotationDelta(
-        //     ref character.ViewPitchDegrees,
-        //     ref character.CharacterYDegrees,
-        //     math.up(),
-        //     characterControl.LookYawPitchDegreesDelta,
-        //     0, // don't include roll angle in simulation
-        //     character.MinViewAngle,
-        //     character.MaxViewAngle,
-        //     out characterRotation,
-        //     out float canceledPitchDegrees,
-        //     out character.ViewLocalRotation);
+
+        KinematicCharacterUtilities.AddVariableRateRotationFromFixedRateRotation(ref characterRotation,
+            characterBody.RotationFromParent, baseContext.Time.DeltaTime, characterBody.LastPhysicsUpdateDeltaTime);
+        stateMachine.VariableUpdate(ref context, ref baseContext, in this);
     }
 
     public void HandlePhysicsUpdatePhaseOne(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext,
@@ -172,6 +91,61 @@ public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<Characte
         ref Character character = ref Character.ValueRW;
         ref KinematicCharacterBody characterBody = ref CharacterDataAccess.CharacterBody.ValueRW;
         ref float3 characterPosition = ref CharacterDataAccess.LocalTransform.ValueRW.Position;
+        CustomGravity customGravity = CustomGravity.ValueRO;
+
+        if (allowPreventGroundingFromFutureSlopeChange)
+        {
+            KinematicCharacterUtilities.Update_PreventGroundingFromFutureSlopeChange(
+                in this,
+                ref context,
+                ref baseContext,
+                CharacterDataAccess.CharacterEntity,
+                ref characterBody,
+                CharacterDataAccess.CharacterProperties.ValueRO,
+                CharacterDataAccess.PhysicsCollider.ValueRO,
+                in character.StepAndSlopeHandling);
+        }
+        if (allowGroundingPushing)
+        {
+            KinematicCharacterUtilities.Update_GroundPushing(
+                in this,
+                ref context,
+                ref baseContext,
+                ref characterBody,
+                CharacterDataAccess.CharacterProperties.ValueRO,
+                CharacterDataAccess.LocalTransform.ValueRO,
+                CharacterDataAccess.DeferredImpulsesBuffer,
+                customGravity.Gravity); 
+        }
+        if (allowMovementAndDecollisions)
+        {
+            KinematicCharacterUtilities.Update_MovementAndDecollisions(
+                in this,
+                ref context,
+                ref baseContext,
+                CharacterDataAccess.CharacterEntity,
+                ref characterBody,
+                CharacterDataAccess.CharacterProperties.ValueRO,
+                CharacterDataAccess.PhysicsCollider.ValueRO,
+                CharacterDataAccess.LocalTransform.ValueRO,
+                CharacterDataAccess.VelocityProjectionHits,
+                CharacterDataAccess.CharacterHitsBuffer,
+                CharacterDataAccess.DeferredImpulsesBuffer,
+                ref characterPosition);
+        }
+        if (allowMovingPlatformDetection)
+        {
+            KinematicCharacterUtilities.Update_MovingPlatformDetection(
+                ref baseContext,
+                ref characterBody);
+        }
+        if (allowParentHandling)
+        {
+            KinematicCharacterUtilities.Update_ParentMomentum(
+                ref baseContext,
+                ref characterBody,
+                CharacterDataAccess.LocalTransform.ValueRO.Position);
+        }
 
         KinematicCharacterUtilities.Update_ProcessStatefulCharacterHits(CharacterDataAccess.CharacterHitsBuffer,
             CharacterDataAccess.StatefulHitsBuffer);
@@ -244,6 +218,26 @@ public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<Characte
     public bool DetectGlobalTransition(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext)
     {
         return false;
+    }
+
+    public unsafe void SetCapsuleGeometry(CapsuleGeometry capsuleGeometry)
+    {
+        ref PhysicsCollider physicsCollider = ref CharacterDataAccess.PhysicsCollider.ValueRW;
+        
+        if (!physicsCollider.IsValid)
+        {
+            Debug.LogError("Character PhysicsCollider is invalid");
+            return;
+        }
+
+        if (physicsCollider.ColliderPtr->Type != ColliderType.Capsule)
+        {
+            Debug.LogError($"Expected Capsule collider, got {physicsCollider.ColliderPtr->Type}");
+            return;
+        }
+
+        CapsuleCollider* capsuleCollider = (CapsuleCollider*)physicsCollider.ColliderPtr;
+        capsuleCollider->Geometry = capsuleGeometry;
     }
     
     
