@@ -11,6 +11,7 @@ public partial class DefaultVariantSystem : DefaultVariantSystemBase
     protected override void RegisterDefaultVariants(Dictionary<ComponentType, Rule> defaultVariants)
     {
         defaultVariants.Add(typeof(LocalTransform), Rule.ForAll(typeof(DontSerializeVariant)));
+        defaultVariants.Add(typeof(KinematicCharacterBody), Rule.ForAll(typeof(KinematicCharacterBody_GhostVariants)));
     }
 }
 

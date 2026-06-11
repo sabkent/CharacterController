@@ -44,16 +44,15 @@ public struct GroundMoveState:ICharacterState
                 math.rotate(characterBody.RotationFromParent, characterBody.RelativeVelocity);
         }
 
-        Debug.Log($"character grounded: {characterBody.IsGrounded}");
         if (characterBody.IsGrounded)
         {
             //character.IsSprinting = characterControl.SprintHeld;
             float speed = character.GroundMaxSpeed;
 
-            float3 moveVectorOnPlane = math.normalize(MathUtilities.ProjectOnPlane(characterControl.Move, characterBody.GroundingUp))
+            float3 moveVectorOnPlane = math.normalizesafe(MathUtilities.ProjectOnPlane(characterControl.Move, characterBody.GroundingUp))
                 * math.length(characterControl.Move);
             float3 velocity = moveVectorOnPlane * speed;
-            CharacterControlUtilities.StandardGroundMove_Interpolated(ref characterBody.RelativeVelocity, velocity, 1,
+            CharacterControlUtilities.StandardGroundMove_Interpolated(ref characterBody.RelativeVelocity, velocity, character.GroundMovementSharpness,
                 deltaTime, characterBody.GroundingUp, characterBody.GroundHit.Normal);
         }
 
@@ -67,20 +66,7 @@ public struct GroundMoveState:ICharacterState
     public void VariableUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext,
         in KinematicCharacterProcessor processor)
     {
-        ref Character character = ref processor.Character.ValueRW;
-        ref CharacterControl characterControl = ref processor.CharacterControl.ValueRW;
-        
-        ref KinematicCharacterBody characterBody = ref processor.CharacterDataAccess.CharacterBody.ValueRW;
-        ref quaternion characterRotation = ref processor.CharacterDataAccess.LocalTransform.ValueRW.Rotation;
-        float deltaTime = baseContext.Time.DeltaTime;
-
-        if (math.lengthsq(characterControl.Move) > 0)
-        {
-            CharacterControlUtilities.SlerpRotationTowardsDirectionAroundUp(ref characterRotation, deltaTime,
-                math.normalizesafe(characterControl.Move), MathUtilities.GetUpFromRotation(characterRotation),
-                character.GroundedRotationSharpness);
-        }
-        
+        // Rotation is owned by CharacterYDegrees/ViewPitchDegrees, matching OnlineFPS prediction.
     }
 
     public (Entity cameraTarget, bool calculateUpFromGravity) GetCameraParameters(in Character character)

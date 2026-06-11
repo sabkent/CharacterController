@@ -33,12 +33,27 @@ public struct KinematicCharacterProcessor: IKinematicCharacterProcessor<Characte
 
     public void VariableUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext)
     {
+        ref Character character = ref Character.ValueRW;
+        ref CharacterControl characterControl = ref CharacterControl.ValueRW;
         ref KinematicCharacterBody characterBody = ref CharacterDataAccess.CharacterBody.ValueRW;
         ref CharacterStateMachine stateMachine = ref StateMachine.ValueRW;
         ref quaternion characterRotation = ref CharacterDataAccess.LocalTransform.ValueRW.Rotation;
 
         KinematicCharacterUtilities.AddVariableRateRotationFromFixedRateRotation(ref characterRotation,
             characterBody.RotationFromParent, baseContext.Time.DeltaTime, characterBody.LastPhysicsUpdateDeltaTime);
+
+        CharacterUtilities.ComputeFinalRotationsFromRotationDelta(
+            ref character.ViewPitchDegrees,
+            ref character.CharacterYDegrees,
+            math.up(),
+            characterControl.LookYawPitchDegreesDelta,
+            character.ViewRollDegrees,
+            character.MinViewAngle,
+            character.MaxViewAngle,
+            out characterRotation,
+            out float canceledPitchDegrees,
+            out character.ViewLocalRotation);
+
         stateMachine.VariableUpdate(ref context, ref baseContext, in this);
     }
 

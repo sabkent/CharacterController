@@ -69,20 +69,7 @@ public struct AirMoveState: ICharacterState
     public void VariableUpdate(ref CharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext,
         in KinematicCharacterProcessor processor)
     {
-        var deltaTime = baseContext.Time.DeltaTime;
-        
-        ref Character character = ref processor.Character.ValueRW;
-        ref CharacterControl characterControl = ref processor.CharacterControl.ValueRW;
-        ref quaternion characterRotation = ref processor.CharacterDataAccess.LocalTransform.ValueRW.Rotation;
-
-        if (math.lengthsq(characterControl.Move) > 0)
-        {
-            CharacterControlUtilities.SlerpRotationTowardsDirectionAroundUp(ref characterRotation, deltaTime,
-                math.normalizesafe(characterControl.Move), MathUtilities.GetUpFromRotation(characterRotation), 
-                character.AirRotationSharpness);
-        }
-        CharacterControlUtilities.SlerpCharacterUpTowardsDirection(ref characterRotation, deltaTime, 
-            math.normalizesafe(-new float3(0, 9, 0)), character.UpOrientationAdaptationSharpness);
+        // Rotation is owned by CharacterYDegrees/ViewPitchDegrees, matching OnlineFPS prediction.
     }
 
     public (Entity cameraTarget, bool calculateUpFromGravity) GetCameraParameters(in Character character)

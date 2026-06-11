@@ -45,11 +45,11 @@ partial struct CharacterPhysicsUpdateSystem : ISystem
         _context.OnSystemUpdate(ref state, commandBuffer);
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
 
-        new CharacterKinematicPhysicsJob
+        state.Dependency = new CharacterKinematicPhysicsJob
         {
             Context = _context,
             BaseContext = _baseContext
-        }.ScheduleParallel();
+        }.ScheduleParallel(state.Dependency);
     }
 
     [WithAll(typeof(Simulate))]

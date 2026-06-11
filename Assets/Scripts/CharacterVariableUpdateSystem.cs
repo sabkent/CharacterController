@@ -47,11 +47,16 @@ public partial struct CharacterVariableUpdateSystem : ISystem
         _context.OnSystemUpdate(ref state, commandBuffer);
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
 
-        new CharacterVariableUpdateJob
+        state.Dependency = new CharacterVariableUpdateJob
         {
             Context = _context,
             BaseContext = _baseContext
-        }.ScheduleParallel();
+        }.ScheduleParallel(state.Dependency);
+
+        state.Dependency = new CameraTargetJob
+        {
+            CharacterLookup = SystemAPI.GetComponentLookup<Character>(true)
+        }.ScheduleParallel(state.Dependency);
     }
 
     [BurstCompile]
@@ -113,6 +118,8 @@ public partial struct CharacterVariableUpdateSystem : ISystem
         }
     }
 
+    [BurstCompile]
+    [WithAll(typeof(Simulate))]
     public partial struct CameraTargetJob : IJobEntity
     {
         [ReadOnly] public ComponentLookup<Character> CharacterLookup;
