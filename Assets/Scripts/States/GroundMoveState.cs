@@ -2,7 +2,6 @@
 using Unity.CharacterController;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.InputSystem;
 
 public struct GroundMoveState:ICharacterState
@@ -11,7 +10,7 @@ public struct GroundMoveState:ICharacterState
         ref KinematicCharacterUpdateContext baseContext, in KinematicCharacterProcessor processor)
     {
         ref Character character = ref processor.Character.ValueRW;
-        
+
         processor.SetCapsuleGeometry(character.StandingGeometry.ToCapsuleGeometry());
     }
 
@@ -29,9 +28,9 @@ public struct GroundMoveState:ICharacterState
     {
         ref Character character = ref processor.Character.ValueRW;
         ref CharacterControl characterControl = ref processor.CharacterControl.ValueRW;
-        
+
         ref KinematicCharacterBody characterBody = ref processor.CharacterDataAccess.CharacterBody.ValueRW;
-        
+
         float deltaTime = baseContext.Time.DeltaTime;
         float elapsedTime = (float)baseContext.Time.ElapsedTime;
 
@@ -54,12 +53,18 @@ public struct GroundMoveState:ICharacterState
             float3 velocity = moveVectorOnPlane * speed;
             CharacterControlUtilities.StandardGroundMove_Interpolated(ref characterBody.RelativeVelocity, velocity, character.GroundMovementSharpness,
                 deltaTime, characterBody.GroundingUp, characterBody.GroundHit.Normal);
+
+            if (characterControl.Jump)
+            {
+                CharacterControlUtilities.StandardJump(ref characterBody, characterBody.GroundingUp * character.GroundJumpSpeed,
+                    cancelVelocityBeforeJump: true, characterBody.GroundingUp);
+            }
         }
 
         processor.HandlePhysicsUpdatePhaseTwo(ref context, ref baseContext,
             allowPreventGroundingFromFutureSlopeChange: true, allowGroundingPushing: true,
             allowMovementAndDecollisions: true, allowMovingPlatformDetection: true, allowParentHandling: true);
-        
+
         DetectTransition(ref context, ref baseContext, in processor);
     }
 
@@ -83,8 +88,13 @@ public struct GroundMoveState:ICharacterState
         in KinematicCharacterProcessor processor)
     {
         ref KinematicCharacterBody characterBody = ref processor.CharacterDataAccess.CharacterBody.ValueRW;
-        ref CharacterControl characterControl = ref processor.CharacterControl.ValueRW;
         ref CharacterStateMachine stateMachine = ref processor.StateMachine.ValueRW;
+
+        if (!characterBody.IsGrounded)
+        {
+            stateMachine.Transition(CharacterStates.AirMove, ref context, ref baseContext, in processor);
+            return;
+        }
 
         processor.DetectGlobalTransition(ref context, ref baseContext);
     }

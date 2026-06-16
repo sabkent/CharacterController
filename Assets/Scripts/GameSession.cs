@@ -6,6 +6,7 @@ using Unity.NetCode;
 using Unity.Networking.Transport;
 using Unity.Scenes;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 public class GameSession
 {
@@ -15,7 +16,7 @@ public class GameSession
 
         var clientWorld = session.CreateClientWorld("127.0.0.1", 7676, "bob");
         var serverWorld = session.CreateServerWorld();
-        
+
         session._worlds.Add(clientWorld);
         session._worlds.Add(serverWorld);
 
@@ -26,12 +27,25 @@ public class GameSession
 
     public void LoadIntoWorlds(WeakObjectSceneReference sceneReference)
     {
+        LoadIntoWorlds(sceneReference.Id.GlobalId.AssetGUID);
+    }
+
+    public void LoadIntoWorlds(Hash128 sceneGuid)
+    {
+        if (!sceneGuid.IsValid)
+        {
+            return;
+        }
+
         foreach (var world in _worlds.Where(world=>world.IsCreated))
         {
-            SceneSystem.LoadSceneAsync(world.Unmanaged, sceneReference.Id.GlobalId.AssetGUID);
+            SceneSystem.LoadSceneAsync(world.Unmanaged, sceneGuid, new SceneSystem.LoadParameters
+            {
+                Flags = SceneLoadFlags.BlockOnImport,
+            });
         }
     }
-    
+
 
     private World CreateClientWorld(string ip, ushort port, string playerName)
     {
@@ -39,7 +53,7 @@ public class GameSession
 
         if (NetworkEndpoint.TryParse(ip, port, out NetworkEndpoint endpoint))
         {
-            
+
         }
 
         return world;

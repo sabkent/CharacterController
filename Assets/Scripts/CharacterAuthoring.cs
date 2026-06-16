@@ -39,10 +39,13 @@ public class CharacterAuthoring : MonoBehaviour
 [GhostComponent]
 public struct Character : IComponentData
 {
+    [Header("Ground Movement")]
     public float GroundMaxSpeed;
     public float GroundMovementSharpness;
     public float GroundedRotationSharpness;
+    public float GroundJumpSpeed;
 
+    [Header("Air Movement")]
     public float AirAcceleration;
     public float AirMaxSpeed;
     public float AirDrag;
@@ -50,7 +53,11 @@ public struct Character : IComponentData
     
     public bool PreventAirAccelerationAgainstUngroundedHits;
     
-    public float JumpSpeed;
+    [Header("Jumping")]
+    public float JumpAfterUngroundedGraceTime;
+    public float JumpBeforeGroundedGraceTime;
+    public float JumpHeldAcceleration;
+    public float MaxHeldJumpTime;
     
     public float3 Gravity;
     
